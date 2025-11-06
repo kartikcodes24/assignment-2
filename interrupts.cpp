@@ -50,8 +50,25 @@ std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             //Add your FORK output here
+            
+            execution += std::to_string(current_time) + ", 1, switch to kernel mode\n";
+            current_time += 1;
 
+            execution += std::to_string(current_time) + ", " + std::to_string(duration_intr) + ", context saved\n";
+            current_time += duration_intr;
 
+            execution += std::to_string(current_time) + ", 1, find vector 2 in memory (FORK)\n";
+            current_time += 1;
+
+            execution += std::to_string(current_time) + ", 1, load vector address into PC\n";
+            current_time += 1;
+
+            execution += std::to_string(current_time) + ", " + std::to_string(duration_intr) + ", cloning the PCB\n";
+            current_time += duration_intr;
+
+            execution += std::to_string(current_time) + ", 0, scheduler called\n";
+            execution += std::to_string(current_time) + ", 1, IRET\n";
+            current_time += 1;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,6 +109,25 @@ std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string
             ///////////////////////////////////////////////////////////////////////////////////////////
             //With the child's trace, run the child (HINT: think recursion)
 
+            if(!child_trace.empty()) {
+                // Create new PCB for the child
+                PCB child(next_pid++, -1, "child_process", 1, -1);
+                wait_queue.push_back(current);      // parent goes to waiting
+                current = child;                    // switch to child context
+
+                // Recursively run the child’s trace
+                auto [child_exec, child_status, new_time] = simulate_trace(
+                    child_trace, current_time, vectors, delays, external_files, current, wait_queue);
+
+                // Merge outputs
+                execution += child_exec;
+                system_status += child_status;
+                current_time = new_time;
+
+                // When child finishes, parent becomes running again
+                current = wait_queue.back();
+                wait_queue.pop_back();
+            }
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////
@@ -104,7 +140,6 @@ std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             //Add your EXEC output here
-
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////
@@ -120,9 +155,8 @@ std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             //With the exec's trace (i.e. trace of external program), run the exec (HINT: think recursion)
-
-
-
+            
+        
             ///////////////////////////////////////////////////////////////////////////////////////////
 
             break; //Why is this important? (answer in report)
@@ -157,6 +191,7 @@ int main(int argc, char** argv) {
 
     /******************ADD YOUR VARIABLES HERE*************************/
 
+    int next_pid = 1; // to track new process IDs
 
     /******************************************************************/
 
