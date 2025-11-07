@@ -141,6 +141,41 @@ std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string
             ///////////////////////////////////////////////////////////////////////////////////////////
             //Add your EXEC output here
 
+            execution += std::to_string(current_time) + ", 1, switch to kernel mode\n";
+            current_time += 1;
+
+            execution += std::to_string(current_time) + ", " + std::to_string(duration_intr) + ", context saved\n";
+            current_time += duration_intr;
+
+            execution += std::to_string(current_time) + ", 1, find vector 3 in memory (EXEC)\n";
+            current_time += 1;
+
+            execution += std::to_string(current_time) + ", 1, load vector address into PC\n";
+            current_time += 1;
+
+            // find program size in external files
+            int prog_size = 0;
+            for(auto &ef : external_files) {
+                if(ef.program_name == program_name) prog_size = ef.size;
+            }
+
+            execution += std::to_string(current_time) + ", 1, Program is " + std::to_string(prog_size) + " MB large\n";
+            current_time += 1;
+
+            // simulate loading
+            int load_time = 15 * prog_size;
+            execution += std::to_string(current_time) + ", " + std::to_string(load_time) + ", loading program into memory\n";
+            current_time += load_time;
+
+            // update PCB
+            execution += std::to_string(current_time) + ", 3, marking partition as occupied\n";
+            current_time += 3;
+            execution += std::to_string(current_time) + ", 6, updating PCB\n";
+            current_time += 6;
+
+            execution += std::to_string(current_time) + ", 0, scheduler called\n";
+            execution += std::to_string(current_time) + ", 1, IRET\n";
+            current_time += 1;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -156,6 +191,15 @@ std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string
             ///////////////////////////////////////////////////////////////////////////////////////////
             //With the exec's trace (i.e. trace of external program), run the exec (HINT: think recursion)
             
+            if(!exec_traces.empty()) {
+                auto [prog_exec, prog_status, new_time] = simulate_trace(
+                    exec_traces, current_time, vectors, delays, external_files, current, wait_queue);
+
+                execution += prog_exec;
+                system_status += prog_status;
+                current_time = new_time;
+            }
+
         
             ///////////////////////////////////////////////////////////////////////////////////////////
 
