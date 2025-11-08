@@ -1,0 +1,3 @@
+CPU, 120
+EXEC program2, 40
+CPU, 50

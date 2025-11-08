@@ -7,6 +7,8 @@
 
 #include<interrupts.hpp>
 
+int next_pid = 1; // pid 0 is init
+
 std::tuple<std::string, std::string, int> simulate_trace(std::vector<std::string> trace_file, int time, std::vector<std::string> vectors, std::vector<int> delays, std::vector<external_file> external_files, PCB current, std::vector<PCB> wait_queue) {
 
     std::string trace;      //!< string to store single line of trace file
